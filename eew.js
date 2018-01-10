@@ -2,10 +2,9 @@
 //@要求モジュール => eris
 
 const Eris = require("eris"); //Erisモジュールの呼び出し
+const token = require("./token")["token"]; //外部ファイルよりToken読み込み
+const bot = new Eris(token);
 const fs = require("fs") //fsモジュールの呼び出し
-
-//変数定義
-var bot = new Eris("NDAwNTE4NDY3MjM4ODg3NDQ1.DTdfyA.Ml6oOujsWBNUZZXKO5XXwYf1BDY"); //BotToken
 
 //botの準備が完了したらコンソールへ投げるメッセージ（変更可能）
 bot.on("ready", () => {
@@ -13,6 +12,7 @@ bot.on("ready", () => {
 });
 
 //jsonを吐かせる
+//なお
 let http = require('http');
 const URL = 'http://svir.jp/eew/data.json';
 
