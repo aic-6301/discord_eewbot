@@ -37,7 +37,7 @@ config.ini内、`'token': ''`にトークンを貼り付けてから実行して
 `cacheclean` : 未実装。jsonファイルのキャッシュを起動時に削除するかを設定。
 
 ***
-##連絡先
+### 連絡先
 このBotについて不明な点などありましたら、Twitter [@hideki_0403](https://twitter.com/hideki_0403/)か
 Discord hideki0403#7963宛てにDMなどをよろしくお願いします。
 
