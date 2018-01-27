@@ -218,7 +218,6 @@ bot.on('messageCreate', (msg) => {
     var eqmhukasa = eqm.Body.Earthquake.Hypocenter.Depth
     var eqmmagnitude = eqm.Body.Earthquake.Magnitude
     var eqmserial = eqm.Head.Serial
-    var eqmflag = eqm.Body.EndFlag
     var eqmido = eqm.Body.Earthquake.Hypocenter.Lat
     var eqmkeido = eqm.Body.Earthquake.Hypocenter.Lon
     var eqmeventid = eqm.Head.EventID
