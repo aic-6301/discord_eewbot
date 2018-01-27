@@ -17,7 +17,7 @@ const fs = require('fs')
 const http = require('http')
 const os = require('os')
 const token = require('./config.ini')['token']
-const eqres = require('./config.ini')['channels']
+const eqres = require('./config.ini')['channel']
 const period = require('./config.ini')['period']
 const updatever = require('./config.ini')['version']
 const updatelog = require('./config.ini')['updatelog']
@@ -62,8 +62,10 @@ setInterval(function () {
     // 比較のためにjsonからデータ吐き出させる
     var comaf = JSON.parse(fs.readFileSync('./eq-after.json', 'utf-8'))
     var comafter = comaf.Head.EventID
+    var comafter2 = comaf.Head.Serial
     var combe = JSON.parse(fs.readFileSync('./eq-before.json', 'utf-8'))
     var combefore = combe.Head.EventID
+    var combefore2 = combe.Head.Serial
 
     // rename
     var eqtimevars = new Date()
@@ -79,9 +81,11 @@ setInterval(function () {
   // fs.renameSync('./eq-before.json', './eq-temp/eq-temp-' + timedata + '.json')
     fs.renameSync('./eq-after.json', './eq-before.json')
     // 比較
-    if (combefore < comafter) {
+    // なおcombefore(after)では地震IDで比較、combefore2(after2)は電文の配信数で比較。
+    // 新規地震はSerial値がリセットされるためこのように対処。
+    if (combefore < comafter || combefore2 < comafter2) {
       // 時刻取得関連の宣言
-      var datedata = '' + fullyear + month + date // ex.)0117
+      var datedata = '' + fullyear + month + date // ex.)20180117
       // jsonからデータ吐かせる
       var eq = JSON.parse(fs.readFileSync('./eq-before.json', 'utf-8'))
       var eqsindo = eq.Body.Intensity.MaxInt
@@ -89,21 +93,70 @@ setInterval(function () {
       var eqzikoku = eq.Body.Earthquake.OriginTime
       var eqhukasa = eq.Body.Earthquake.Hypocenter.Depth
       var eqmagnitude = eq.Body.Earthquake.Magnitude
+      var eqserial = eq.Head.Serial
       var eqflag = eq.Body.EndFlag
       var eqido = eq.Body.Earthquake.Hypocenter.Lat
       var eqkeido = eq.Body.Earthquake.Hypocenter.Lon
+
+      // 最終報判定フラグ
+      // 震度によりcolor変更、icon変更のあれ
+      if (eqsindo === '7') {
+        var embedcolor = 0xf40004
+        var embedthumbnail = 'http://toriho-dai.com/img/number/number3_7.png'
+      } else {
+        if (eqsindo === '6+') {
+          var embedcolor = 0xff352b
+          var embedthumbnail = 'http://toriho-dai.com/img/number/number3_6.png'
+        } else {
+          if (eqsindo === '6-') {
+            var embedcolor = 0xff4f1e
+            var embedthumbnail = 'http://toriho-dai.com/img/number/number3_6.png'
+          } else {
+            if (eqsindo === '5+') {
+              var embedcolor = 0xff691e
+              var embedthumbnail = 'http://toriho-dai.com/img/number/number3_5.png'
+            } else {
+              if (eqsindo === '5-') {
+                var embedcolor = 0xff9d1e
+                var embedthumbnail = 'http://toriho-dai.com/img/number/number3_5.png'
+              } else {
+                if (eqsindo === '4') {
+                  var embedcolor = 0xffb01e
+                  var embedthumbnail = 'http://toriho-dai.com/img/number/number3_4.png'
+                } else {
+                  if (eqsindo === '3') {
+                    var embedcolor = 0xffe11e
+                    var embedthumbnail = 'http://toriho-dai.com/img/number/number3_3.png'
+                  } else {
+                    if (eqsindo === '2') {
+                      var embedcolor = 0xacff1e
+                      var embedthumbnail = 'http://toriho-dai.com/img/number/number3_2.png'
+                    } else {
+                      if (eqsindo === '1') {
+                        var embedcolor = 0xc1fcff
+                        var embedthumbnail = 'http://toriho-dai.com/img/number/number3_1.png'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
       // 新規地震検知でなげるやつ
       bot.createMessage(eqres, {
         embed: {
           description: '新しい地震データを受信しました。しっかりとご自身で身の安全を確認し、行動するよう心掛けてください。',
           author: {
-            name: '地震速報 (ここをクリックで強震モニタにアクセス)',
+            name: '地震速報 [第' + eqserial + '報]',
             icon_url: 'http://icooon-mono.com/i/icon_15889/icon_158890_256.png',
             url: 'http://www.kmoni.bosai.go.jp/new/'
           },
           title: '\n地震がありました。地震の内容については以下の通りです。',
-          color: 0xef1f1f,
+          color: embedcolor,
           image: {'url': 'http://www.kmoni.bosai.go.jp/new/data/map_img/RealTimeImg/jma_s/' + datedata + '/' + timedata + '.jma_s.gif'},
+          thumbnail: {'url': embedthumbnail},
           fields: [
             {
               name: '**最大震度**',
@@ -164,10 +217,57 @@ bot.on('messageCreate', (msg) => {
     var eqmzikoku = eqm.Body.Earthquake.OriginTime
     var eqmhukasa = eqm.Body.Earthquake.Hypocenter.Depth
     var eqmmagnitude = eqm.Body.Earthquake.Magnitude
+    var eqmserial = eqm.Head.Serial
     var eqmflag = eqm.Body.EndFlag
     var eqmido = eqm.Body.Earthquake.Hypocenter.Lat
     var eqmkeido = eqm.Body.Earthquake.Hypocenter.Lon
     var eqmeventid = eqm.Head.EventID
+
+    // 震度によりcolor変更、icon変更のあれ
+    if (eqmsindo === '7') {
+      var embed2color = 0xf40004
+      var embed2thumbnail = 'http://toriho-dai.com/img/number/number3_7.png'
+    } else {
+      if (eqmsindo === '6+') {
+        var embed2color = 0xff352b
+        var embed2thumbnail = 'http://toriho-dai.com/img/number/number3_6.png'
+      } else {
+        if (eqmsindo === '6-') {
+          var embed2color = 0xff4f1e
+          var embed2thumbnail = 'http://toriho-dai.com/img/number/number3_6.png'
+        } else {
+          if (eqmsindo === '5+') {
+            var embed2color = 0xff691e
+            var embed2thumbnail = 'http://toriho-dai.com/img/number/number3_5.png'
+          } else {
+            if (eqmsindo === '5-') {
+              var embed2color = 0xff9d1e
+              var embed2thumbnail = 'http://toriho-dai.com/img/number/number3_5.png'
+            } else {
+              if (eqmsindo === '4') {
+                var embed2color = 0xffb01e
+                var embed2thumbnail = 'http://toriho-dai.com/img/number/number3_4.png'
+              } else {
+                if (eqmsindo === '3') {
+                  var embed2color = 0xffe11e
+                  var embed2thumbnail = 'http://toriho-dai.com/img/number/number3_3.png'
+                } else {
+                  if (eqmsindo === '2') {
+                    var embed2color = 0xacff1e
+                    var embed2thumbnail = 'http://toriho-dai.com/img/number/number3_2.png'
+                  } else {
+                    if (eqmsindo === '1') {
+                      var embed2color = 0xc1fcff
+                      var embed2thumbnail = 'http://toriho-dai.com/img/number/number3_1.png'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
 
     console.log('出力完了')
 
@@ -182,12 +282,13 @@ bot.on('messageCreate', (msg) => {
       embed: {
         description: '※なお6時間以上前の地震についてはNIED新強震モニタの仕様上画像取得は行えません。',
         author: {
-          name: '最終地震速報（ここをクリックで新強震モニタにアクセスできます。）',
+          name: '最終地震速報 [最終報]',
           icon_url: 'http://icooon-mono.com/i/icon_15889/icon_158890_256.png',
           url: 'http://www.kmoni.bosai.go.jp/new/'
         },
         title: '\n過去の地震の内容については以下の通りです。',
-        color: 0xef1f1f,
+        color: embed2color,
+        thumbnail: {'url': embed2thumbnail},
         image: {'url': 'http://www.kmoni.bosai.go.jp/new/data/map_img/RealTimeImg/jma_s/' + datedata + '/' + eqmeventid + '.jma_s.gif'},
         fields: [
           {
@@ -199,20 +300,20 @@ bot.on('messageCreate', (msg) => {
             value: eqmchimei,
             inline: true
           }, {
-            name: '**発生時刻**',
-            value: eqmzikoku,
-            inline: true
-          }, {
             name: '**深さ**',
             value: eqmhukasa + 'km',
+            inline: true
+          }, {
+            name: '**発生時刻**',
+            value: eqmzikoku,
             inline: true
           }, {
             name: '**マグニチュード**',
             value: 'M' + eqmmagnitude,
             inline: true
           }, {
-            name: '**最終報判定フラグ**',
-            value: eqmflag + '（0で続報,1で最終報）',
+            name: '**合計電文数**',
+            value: '計' + eqmserial + '報',
             inline: true
           }, {
             name: '**震源位置の緯度**',
@@ -244,7 +345,7 @@ bot.on('messageCreate', (msg) => {
     var minutes = ('0' + eqtimevars.getMinutes()).slice(-2)
     var seconds = ('0' + eqtimevars.getSeconds()).slice(-2)
     var timedata = '' + fullyear + month + date + hours + minutes + seconds // ex.)20180117174403
-    var datedata = '' + fullyear + month + date // ex.)0117
+    var datedata = '' + fullyear + month + date // ex.)20180117
 
     console.log('手動でPGA画像取得が実行されました。\nチャンネルID:' + msg.channel.id + '\n実行したユーザー:' + msg.member.user)
     bot.createMessage(msg.channel.id, {
@@ -256,6 +357,7 @@ bot.on('messageCreate', (msg) => {
           url: 'http://www.kmoni.bosai.go.jp/new/'
         },
         color: 0xff9d1e,
+//        thumbnail: {'url': 'http://www.la-mure.co.jp/p2-rei/logodesigh/logo_anied.jpg'},
         image: {'url': 'http://www.kmoni.bosai.go.jp/new/data/map_img/RealTimeImg/acmap_s/' + datedata + '/' + timedata + '.acmap_s.gif'},
         timestamp: new Date(),
         footer: {
@@ -278,7 +380,7 @@ bot.on('messageCreate', (msg) => {
     var minutes = ('0' + eqtimevars.getMinutes()).slice(-2)
     var seconds = ('0' + eqtimevars.getSeconds()).slice(-2)
     var timedata = '' + fullyear + month + date + hours + minutes + seconds // ex.)20180117174403
-    var datedata = '' + fullyear + month + date // ex.)0117
+    var datedata = '' + fullyear + month + date // ex.)20180117
 
     console.log('手動でRealTimeSindo画像取得が実行されました。\nチャンネルID:' + msg.channel.id + '\n実行したユーザー:' + msg.member.user)
     bot.createMessage(msg.channel.id, {
