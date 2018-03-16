@@ -21,6 +21,7 @@ const eqres = require('./config.ini')['channel']
 const period = require('./config.ini')['period']
 const updatever = require('./config.ini')['version']
 const updatelog = require('./config.ini')['updatelog']
+const createcache = require('./config.ini')['createcache']
 const cacheclean = require('./config.ini')['cacheclean']
 const bot = new Eris(token)
 
@@ -32,7 +33,6 @@ bot.on('ready', () => {
 })
 
 // jsonを吐かせて落とす
-// なお30秒周期で取得
 
 setInterval(function () {
 // URLを指定
@@ -76,16 +76,18 @@ setInterval(function () {
     var minutes = ('0' + eqtimevars.getMinutes()).slice(-2)
     var seconds = ('0' + eqtimevars.getSeconds()).slice(-2)
     var timedata = '' + fullyear + month + date + hours + minutes + seconds // ex.)20180117174403
-  // 下のコメントアウトを外せばjsonのログをtempフォルダに移動させられるが、
-  // 一時間につき論理値1200ファイルが生成されるため注意が必要。
-  // fs.renameSync('./eq-before.json', './eq-temp/eq-temp-' + timedata + '.json')
+    var datedata = '' + fullyear + month + date // ex.)20180117
+
+    if (createcache === 'true') {
+      fs.renameSync('./eq-before.json', './eq-temp/eq-temp-' + timedata + '.json')
+    }
+
     fs.renameSync('./eq-after.json', './eq-before.json')
     // 比較
     // なおcombefore(after)では地震IDで比較、combefore2(after2)は電文の配信数で比較。
     // 新規地震はSerial値がリセットされるためこのように対処。
     if (combefore < comafter || combefore2 < comafter2) {
-      // 時刻取得関連の宣言
-      var datedata = '' + fullyear + month + date // ex.)20180117
+      
       // jsonからデータ吐かせる
       var eq = JSON.parse(fs.readFileSync('./eq-before.json', 'utf-8'))
       var eqsindo = eq.Body.Intensity.MaxInt
@@ -356,7 +358,7 @@ bot.on('messageCreate', (msg) => {
           url: 'http://www.kmoni.bosai.go.jp/new/'
         },
         color: 0xff9d1e,
-//        thumbnail: {'url': 'http://www.la-mure.co.jp/p2-rei/logodesigh/logo_anied.jpg'},
+        thumbnail: {'url': 'https://pbs.twimg.com/profile_images/580951911337050112/-wD1RBUK.png'},
         image: {'url': 'http://www.kmoni.bosai.go.jp/new/data/map_img/RealTimeImg/acmap_s/' + datedata + '/' + timedata + '.acmap_s.gif'},
         timestamp: new Date(),
         footer: {
@@ -391,6 +393,7 @@ bot.on('messageCreate', (msg) => {
           url: 'http://www.kmoni.bosai.go.jp/new/'
         },
         color: 0xff9d1e,
+        thumbnail: {'url': 'https://pbs.twimg.com/profile_images/580951911337050112/-wD1RBUK.png'},
         image: {'url': 'http://www.kmoni.bosai.go.jp/new/data/map_img/RealTimeImg/jma_s/' + datedata + '/' + timedata + '.jma_s.gif'},
         timestamp: new Date(),
         footer: {
