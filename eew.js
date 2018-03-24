@@ -18,6 +18,8 @@ const http = require('http')
 const os = require('os')
 const token = require('./config.ini')['token']
 const eqres = require('./config.ini')['channel']
+const generalchannel = require('./config.ini')['general']
+const eqlevel = require('./config.ini')['eqlevel']
 const period = require('./config.ini')['period']
 const updatever = require('./config.ini')['version']
 const updatelog = require('./config.ini')['updatelog']
@@ -146,12 +148,71 @@ setInterval(function () {
           }
         }
       }
+
+      if (eqflag === 0) {
+        var eqdensin = '[第' + eqserial + '報]'
+      } else {
+        var eqdensin = '[最終報]'
+      }
       // 新規地震検知でなげるやつ
+      if (eqsindo >= eqlevel) {
+        bot.createMessage(eqres, {
+          embed: {
+            description: '震度' + eqlevel + '以上の新しい地震データを受信しました。しっかりと身の安全を確認し、行動するよう心掛けてください。',
+            author: {
+              name: '地震速報 ' + eqdensin,
+              icon_url: 'http://icooon-mono.com/i/icon_15889/icon_158890_256.png',
+              url: 'http://www.kmoni.bosai.go.jp/new/'
+            },
+            title: '\n地震がありました。地震の内容については以下の通りです。',
+            color: embedcolor,
+            image: {'url': 'http://www.kmoni.bosai.go.jp/new/data/map_img/RealTimeImg/jma_s/' + datedata + '/' + timedata + '.jma_s.gif'},
+            thumbnail: {'url': embedthumbnail},
+            fields: [
+              {
+                name: '**最大震度**',
+                value: '震度' + eqsindo,
+                inline: true
+              }, {
+                name: '**震央地名**',
+                value: eqchimei,
+                inline: true
+              }, {
+                name: '**発生時刻**',
+                value: eqzikoku,
+                inline: true
+              }, {
+                name: '**深さ**',
+                value: eqhukasa + 'km',
+                inline: true
+              }, {
+                name: '**マグニチュード**',
+                value: 'M' + eqmagnitude,
+                inline: true
+              }, {
+                name: '**震源位置の緯度**',
+                value: '緯度' + eqido + '度',
+                inline: true
+              }, {
+                name: '**震源位置の経度**',
+                value: '経度' + eqkeido + '度',
+                inline: true
+              }
+            ],
+  
+            timestamp: new Date(),
+            footer: {
+              text: 'Powerd by svir.jp (https://svir.jp/eew/data.json)'
+            }
+          }
+        })
+        bot.createMessage(eqres, 'http://www.kmoni.bosai.go.jp/new/data/map_img/RealTimeImg/jma_s/' + datedata + '/' + timedata + '.jma_s.gif')
+      } else {
       bot.createMessage(eqres, {
         embed: {
-          description: '新しい地震データを受信しました。しっかりとご自身で身の安全を確認し、行動するよう心掛けてください。',
+          description: '震度' + eqlevel + '以下の新しい地震データを受信しました。しっかりと身の安全を確認し、行動するよう心掛けてください。',
           author: {
-            name: '地震速報 [第' + eqserial + '報]',
+            name: '地震速報 ' + eqdenisn,
             icon_url: 'http://icooon-mono.com/i/icon_15889/icon_158890_256.png',
             url: 'http://www.kmoni.bosai.go.jp/new/'
           },
@@ -181,10 +242,6 @@ setInterval(function () {
               value: 'M' + eqmagnitude,
               inline: true
             }, {
-              name: '**最終報判定フラグ**',
-              value: eqflag + '（0で続報,1で最終報）',
-              inline: true
-            }, {
               name: '**震源位置の緯度**',
               value: '緯度' + eqido + '度',
               inline: true
@@ -201,7 +258,9 @@ setInterval(function () {
           }
         }
       })
+      bot.createMessage(eqres, 'http://www.kmoni.bosai.go.jp/new/data/map_img/RealTimeImg/jma_s/' + datedata + '/' + timedata + '.jma_s.gif')
     }
+  }
   }, 5000)
 }, period)
 
